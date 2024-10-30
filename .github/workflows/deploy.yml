@@ -3,8 +3,8 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main          # Production deployment
-      - development   # Staging deployment
+      - main
+      - development
 
 jobs:
   deploy:
@@ -19,25 +19,35 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
+      # New Testing Step
+      - name: Install dependencies and run tests
+        run: |
+          npm install
+          npm test
+        env:
+          CI: true # Ensures that certain frameworks (like React) run tests in CI mode
+
+      # Deploy to Production
       - name: Deploy to Production
         if: github.ref == 'refs/heads/main'
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_USER: admin
         run: |
-          ssh -T -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+          ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
             cd /var/www/brianward.tech/html
             git pull origin main
             sudo systemctl reload nginx
           EOF
 
+      # Deploy to Staging
       - name: Deploy to Staging
         if: github.ref == 'refs/heads/development'
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_USER: admin
         run: |
-          ssh -T -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
+          ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
             cd /var/www/staging.brianward.tech/html
             git pull origin development
             sudo systemctl reload nginx

@@ -1,2 +1,3 @@
 # bvvard.github.io
-Portfolio
+
+A portfolio for Computer Science and Cybersecurity professionals built with React.
